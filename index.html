@@ -12,9 +12,10 @@
         .card-stats { border: none; border-radius: 18px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); transition: 0.3s; background: white; }
         .vendedor-header { color: var(--verde); font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
         .text-success-distrileco { color: #2e7d32 !important; }
-        .h2-responsive { font-size: calc(1.3rem + 0.6vw); }
+        .h2-responsive { font-size: calc(1rem + 0.8vw); }
         .btn-update { transition: all 0.2s ease; border-radius: 20px; font-size: 0.75rem; }
         .btn-update:active { transform: scale(0.9); }
+        .tiny-text { font-size: 0.65rem; }
     </style>
 </head>
 <body>
@@ -41,27 +42,27 @@
         <select id="selVendedor" class="form-select form-select-lg border-success text-center fw-bold shadow-sm" onchange="actualizar()"></select>
         <div id="loader" class="mt-3 text-muted small">
             <div class="spinner-border spinner-border-sm text-success" role="status"></div>
-            Sincronizando con el Excel...
+            Sincronizando con Excel...
         </div>
     </div>
 
-    <div class="row mb-3 text-center">
+    <div class="row mb-3 text-center px-1">
         <div class="col-4 px-1">
             <div class="card card-stats p-2 border-start border-success border-4">
                 <h6 class="text-muted tiny-text fw-bold mb-1">VENTA</h6>
-                <h2 id="vNeta" class="text-success-distrileco fw-bold m-0 h2-responsive" style="font-size: 1rem;">$ 0</h2>
+                <h2 id="vNeta" class="text-success-distrileco fw-bold m-0 h2-responsive">$ 0</h2>
             </div>
         </div>
         <div class="col-4 px-1">
             <div class="card card-stats p-2 border-start border-danger border-4">
                 <h6 class="text-muted tiny-text fw-bold mb-1">DEV.</h6>
-                <h2 id="vDev" class="text-danger fw-bold m-0 h2-responsive" style="font-size: 1rem;">$ 0</h2>
+                <h2 id="vDev" class="text-danger fw-bold m-0 h2-responsive">$ 0</h2>
             </div>
         </div>
         <div class="col-4 px-1">
             <div class="card card-stats p-2 border-start border-primary border-4">
                 <h6 class="text-muted tiny-text fw-bold mb-1">EFECT.</h6>
-                <h2 id="vPorc" class="text-primary fw-bold m-0 h2-responsive" style="font-size: 1rem;">0%</h2>
+                <h2 id="vPorc" class="text-primary fw-bold m-0 h2-responsive">0%</h2>
             </div>
         </div>
     </div>
@@ -83,23 +84,33 @@
 </div>
 
 <script>
+    // URL DE TU APPS SCRIPT
     const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbwg3h6OhzJsGgeuOEnTtlR7ElZKOdo7XYO1Sg-YfzjPBB5Qlv9rj8ZsISPHt7KAmF_Y4w/exec";
     let datosWeb = [];
 
     async function cargar() {
         try {
-            const res = await fetch(URL_SCRIPT, { redirect: 'follow' });
+            // Agregamos un número aleatorio al final para evitar que el celular guarde datos viejos (Caché)
+            const res = await fetch(URL_SCRIPT + "?v=" + Math.random(), { redirect: 'follow' });
             datosWeb = await res.json();
+            
             const listaVendedores = [...new Set(datosWeb.map(d => d.vendedor))].filter(v => v && v !== "undefined").sort();
             const sel = document.getElementById('selVendedor');
+            const valorActual = sel.value; // Guardamos lo que estaba seleccionado
+
             sel.innerHTML = '<option value="">-- ELIJA VENDEDOR --</option><option value="ALL">-- TODO DISTRILECO --</option>';
             listaVendedores.forEach(v => sel.innerHTML += `<option value="${v}">${v}</option>`);
+            
+            if(valorActual) sel.value = valorActual; // Mantenemos la selección tras el auto-refresco
+            
             document.getElementById('loader').style.display = 'none';
-        } catch (error) { console.error("Error:", error); }
+            actualizar(); // Refrescamos la tabla si ya hay alguien seleccionado
+        } catch (error) { console.error("Error cargando:", error); }
     }
 
     function limpiarNum(n) {
         if (typeof n === 'number') return n;
+        if (!n) return 0;
         let limpio = String(n).replace(/[$. ]/g, "").replace(",", ".");
         return parseFloat(limpio) || 0;
     }
@@ -112,6 +123,7 @@
         if (!v) return;
 
         const filtrados = v === "ALL" ? datosWeb : datosWeb.filter(d => d.vendedor === v);
+        
         const acumulado = filtrados.reduce((acc, curr) => {
             const prov = curr.proveedor || "OTRO";
             if (!acc[prov]) acc[prov] = { vta: 0, dev: 0 };
@@ -128,6 +140,7 @@
 
         document.getElementById('vNeta').innerText = `$ ${tV.toLocaleString('es-CO', {maximumFractionDigits: 0})}`;
         document.getElementById('vDev').innerText = `$ ${tD.toLocaleString('es-CO', {maximumFractionDigits: 0})}`;
+        
         let porc = tV > 0 ? (100 - (tD / tV * 100)) : 0;
         document.getElementById('vPorc').innerText = (porc < 0 ? 0 : porc).toFixed(1) + "%";
     }
