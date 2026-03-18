@@ -2,76 +2,136 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Distrileco | Vendedores</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        :root { --verde: #2e7d32; }
-        body { background-color: #f0f2f5; }
-        .header { background: var(--verde); color: white; padding: 20px; border-bottom: 5px solid #ffd600; }
-        .card-stats { border: none; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        :root { --verde: #2e7d32; --amarillo: #ffd600; }
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .header { background: var(--verde); color: white; padding: 20px; border-bottom: 5px solid var(--amarillo); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .card-stats { border: none; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); transition: 0.3s; }
+        .card-stats:hover { transform: translateY(-5px); }
+        .table-container { background: white; border-radius: 15px; padding: 20px; }
     </style>
 </head>
 <body>
 
 <div class="header d-flex justify-content-between align-items-center">
-    <div><h2>🚀 DISTRILECO S.A.S</h2><p>Ventas Marzo 2026</p></div>
-    <div class="text-end"><b>Vibras Positivas</b></div>
+    <div>
+        <h2 class="mb-0">🚀 DISTRILECO S.A.S</h2>
+        <p class="mb-0 opacity-75">Control de Ventas - Marzo 2026</p>
+    </div>
+    <div class="text-end">
+        <span class="d-block fw-bold">Vibras Positivas</span>
+        <span class="badge bg-warning text-dark">En Línea</span>
+    </div>
 </div>
 
 <div class="container mt-4 text-center">
     <div class="card card-stats p-4 mb-4">
-        <h5 class="text-success">SELECCIONAR VENDEDOR:</h5>
-        <select id="selVendedor" class="form-select form-select-lg" onchange="actualizar()"></select>
+        <h5 class="text-success fw-bold mb-3">👤 SELECCIONAR VENDEDOR:</h5>
+        <select id="selVendedor" class="form-select form-select-lg border-success" onchange="actualizar()"></select>
+        <div id="loader" class="mt-2 text-muted small">Cargando datos desde Google Drive...</div>
     </div>
 
     <div class="row mb-4">
-        <div class="col-md-4"><div class="card card-stats p-3"><h6>VENTA NETA</h6><h3 id="vNeta" class="text-success">$ 0</h3></div></div>
-        <div class="col-md-4"><div class="card card-stats p-3"><h6>DEVOLUCIONES</h6><h3 id="vDev" class="text-danger">$ 0</h3></div></div>
-        <div class="col-md-4"><div class="card card-stats p-3"><h6>EFECTIVIDAD</h6><h3 id="vPorc">0%</h3></div></div>
+        <div class="col-md-4 mb-3">
+            <div class="card card-stats p-3 bg-white">
+                <h6 class="text-muted small">VENTA NETA</h6>
+                <h3 id="vNeta" class="text-success fw-bold">$ 0</h3>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card card-stats p-3 bg-white">
+                <h6 class="text-muted small">DEVOLUCIONES</h6>
+                <h3 id="vDev" class="text-danger fw-bold">$ 0</h3>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card card-stats p-3 bg-white">
+                <h6 class="text-muted small">EFECTIVIDAD</h6>
+                <h3 id="vPorc" class="text-dark fw-bold">0%</h3>
+            </div>
+        </div>
     </div>
 
-    <div class="card card-stats p-4">
-        <table class="table table-hover">
-            <thead class="table-dark"><tr><th>Proveedor</th><th>Venta</th><th>Devolución</th></tr></thead>
-            <tbody id="tabla"></tbody>
-        </table>
+    <div class="card card-stats p-4 table-container mb-5">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Proveedor / Marca</th>
+                        <th class="text-end">Venta</th>
+                        <th class="text-end">Devolución</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla">
+                    </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <script>
-    // PEGA AQUÍ LA URL QUE COPIASTE EN EL PASO 1 (la que termina en /exec)
     const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbwg3h6OhzJsGgeuOEnTtlR7ElZKOdo7XYO1Sg-YfzjPBB5Qlv9rj8ZsISPHt7KAmF_Y4w/exec";
 
     let datosWeb = [];
 
     async function cargar() {
-        const res = await fetch(URL_SCRIPT);
-        datosWeb = await res.json();
-        
-        // Cargar selector
-        const vends = [...new Set(datosWeb.map(d => d.vendedor))];
-        const sel = document.getElementById('selVendedor');
-        sel.innerHTML = '<option value="ALL">-- TOTAL GENERAL --</option>';
-        vends.forEach(v => sel.innerHTML += `<option value="${v}">${v}</option>`);
-        actualizar();
+        try {
+            const res = await fetch(URL_SCRIPT);
+            const data = await res.json();
+            datosWeb = data;
+            
+            // Extraer vendedores únicos y limpiar nulos
+            const vends = [...new Set(datosWeb.map(d => d.vendedor))].filter(v => v).sort();
+            const sel = document.getElementById('selVendedor');
+            
+            sel.innerHTML = '<option value="ALL">-- VER TOTAL GENERAL --</option>';
+            vends.forEach(v => {
+                sel.innerHTML += `<option value="${v}">${v}</option>`;
+            });
+
+            document.getElementById('loader').style.display = 'none';
+            actualizar();
+        } catch (error) {
+            console.error("Error:", error);
+            document.getElementById('loader').innerHTML = "<span class='text-danger'>❌ Error al conectar. Revisa los permisos del Script.</span>";
+        }
     }
 
     function actualizar() {
         const v = document.getElementById('selVendedor').value;
         const tabla = document.getElementById('tabla');
         let tV = 0, tD = 0;
+        
         tabla.innerHTML = "";
 
+        // Filtrar datos
         const filtrados = v === "ALL" ? datosWeb : datosWeb.filter(d => d.vendedor === v);
 
         filtrados.forEach(d => {
-            tV += d.venta; tD += d.dev;
-            tabla.innerHTML += `<tr><td>${d.proveedor}</td><td>$ ${d.venta.toLocaleString()}</td><td>$ ${d.dev.toLocaleString()}</td></tr>`;
+            const venta = parseFloat(d.venta) || 0;
+            const dev = parseFloat(d.dev) || 0;
+            
+            tV += venta; 
+            tD += dev;
+
+            tabla.innerHTML += `
+                <tr>
+                    <td class="text-start fw-bold text-secondary">${d.proveedor}</td>
+                    <td class="text-end text-success fw-bold">$ ${venta.toLocaleString('es-CO')}</td>
+                    <td class="text-end text-danger">$ ${dev.toLocaleString('es-CO')}</td>
+                </tr>`;
         });
 
-        document.getElementById('vNeta').innerText = `$ ${tV.toLocaleString()}`;
-        document.getElementById('vDev').innerText = `$ ${tD.toLocaleString()}`;
-        document.getElementById('vPorc').innerText = tV > 0 ? (100 - (tD/tV*100)).toFixed(1) + "%" : "0%";
+        // Actualizar KPIs con formato de moneda Colombia
+        document.getElementById('vNeta').innerText = `$ ${tV.toLocaleString('es-CO')}`;
+        document.getElementById('vDev').innerText = `$ ${tD.toLocaleString('es-CO')}`;
+        
+        // Cálculo de efectividad
+        const porc = tV > 0 ? (100 - (tD / tV * 100)).toFixed(1) : 0;
+        document.getElementById('vPorc').innerText = porc + "%";
     }
 
     window.onload = cargar;
