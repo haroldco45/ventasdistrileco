@@ -2,135 +2,125 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Distrileco | Dashboard Real</title>
+    <title>Distrileco | Control Ventas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        :root { --verde: #2e7d32; }
-        body { background-color: #f8f9fa; font-family: sans-serif; }
-        .header { background: var(--verde); color: white; padding: 15px; border-bottom: 4px solid #ffd600; }
-        .kpi-card { border: none; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .logo-vp { height: 40px; }
+        :root { --verde: #2e7d32; --amarillo: #ffd600; }
+        body { background-color: #f4f4f4; }
+        .header { background: var(--verde); color: white; padding: 20px; border-bottom: 5px solid var(--amarillo); }
+        .kpi-card { border: none; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .logo-vp { width: 50px; height: 50px; background: white; border-radius: 50%; padding: 5px; }
     </style>
 </head>
 <body>
 
 <div class="header d-flex justify-content-between align-items-center">
     <div>
-        <h4 class="mb-0">DISTRILECO S.A.S</h4>
-        <small>Control de Ventas por Vendedor - 202603</small>
+        <h2 class="mb-0">🚀 DISTRILECO S.A.S</h2>
+        <p class="mb-0">Gestión de Ventas - Marzo 2026</p>
     </div>
-    <div class="text-end">
-        <small class="d-block">Vibras Positivas</small>
-        <img src="https://via.placeholder.com/40/ffffff/000000?text=VP" class="logo-vp">
+    <div class="text-center">
+        <small class="d-block fw-bold">Vibras Positivas</small>
+        <div class="logo-vp mx-auto mt-1 text-dark d-flex align-items-center justify-content-center">✨</div>
     </div>
 </div>
 
 <div class="container mt-4">
     <div class="row mb-4 justify-content-center">
         <div class="col-md-6 text-center">
-            <label class="fw-bold mb-2">👤 SELECCIONAR VENDEDOR:</label>
-            <select id="selVendedor" class="form-select border-success" onchange="procesar()">
-                <option value="GENERAL">-- TOTAL GENERAL (TODOS) --</option>
-            </select>
+            <label class="fw-bold text-success mb-2">👤 FILTRAR POR VENDEDOR:</label>
+            <select id="selVendedor" class="form-select border-success shadow-sm" onchange="actualizar()"></select>
         </div>
     </div>
 
     <div class="row mb-4 text-center">
-        <div class="col-md-4">
-            <div class="card kpi-card p-3">
-                <small class="text-muted">VENTA NETA</small>
-                <h3 id="vNeta" class="text-success fw-bold">$ 0</h3>
+        <div class="col-md-4 mb-3">
+            <div class="card kpi-card p-4">
+                <h6 class="text-muted">VENTA TOTAL</h6>
+                <h2 id="totalVenta" class="text-success fw-bold">$ 0</h2>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card kpi-card p-3">
-                <small class="text-muted">DEVOLUCIONES</small>
-                <h3 id="vDev" class="text-danger fw-bold">$ 0</h3>
+        <div class="col-md-4 mb-3">
+            <div class="card kpi-card p-4">
+                <h6 class="text-muted">DEVOLUCIONES</h6>
+                <h2 id="totalDev" class="text-danger fw-bold">$ 0</h2>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card kpi-card p-3">
-                <small class="text-muted">% DEVOLUCIÓN</small>
-                <h3 id="vPorc">0%</h3>
+        <div class="col-md-4 mb-3">
+            <div class="card kpi-card p-4">
+                <h6 class="text-muted">% DEVOLUCIÓN</h6>
+                <h2 id="porcDev" class="text-dark">0%</h2>
             </div>
         </div>
     </div>
 
-    <div class="card p-3 shadow-sm">
-        <table class="table table-striped">
-            <thead class="table-dark">
-                <tr>
-                    <th>Proveedor</th>
-                    <th class="text-end">Venta</th>
-                    <th class="text-end">Devolución</th>
-                </tr>
-            </thead>
-            <tbody id="tabla"></tbody>
-        </table>
+    <div class="card p-4 shadow-sm mb-5">
+        <h5 class="mb-3 text-success">Detalle por Proveedor</h5>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr><th>Proveedor</th><th class="text-end">Venta</th><th class="text-end">Devolución</th></tr>
+                </thead>
+                <tbody id="tablaBody"></tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <script>
-    // PEGA AQUÍ TU URL DE GOOGLE SHEETS (CSV)
-    const URL_CSV = "TU_URL_AQUI"; 
+    // ⚠️ REEMPLAZA CON EL ENLACE QUE COPIASTE EN EL PASO 1
+    const URL_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTS9DgsxRjIOoy7j-8pYeuxO_-gIaxqC8w906-pMzHpsbc5Rb4xx0UgfrVoglI7TQ/pub?gid=2066911078&single=true&output=csv";
 
-    let rawData = [];
+    let datos = [];
 
-    async function cargar() {
-        const res = await fetch(URL_CSV);
-        const text = await res.text();
-        // Separar por filas y limpiar datos
-        const rows = text.split('\n').map(r => r.split(','));
+    async function cargarDatos() {
+        try {
+            const r = await fetch(URL_CSV);
+            const t = await r.text();
+            const filas = t.split('\n').map(f => f.split(','));
 
-        // Procesar filas ignorando los encabezados de la tabla dinámica
-        // Según tu imagen, los datos reales empiezan después de las filas de filtro
-        rawData = rows.slice(7).map(r => ({
-            proveedor: r[0]?.trim(),
-            vendedor: r[1]?.trim(), // Asegúrate que en el CSV esta sea la columna de vendedor
-            venta: parseFloat(r[2]?.replace(/[^0-9.-]+/g,"")) || 0,
-            devolucion: parseFloat(r[3]?.replace(/[^0-9.-]+/g,"")) || 0
-        })).filter(d => d.proveedor && d.proveedor !== "Total general");
+            datos = filas.map(f => ({
+                proveedor: f[0]?.trim(),
+                vendedor: f[1]?.trim(),
+                venta: parseFloat(f[2]?.replace(/[^0-9.-]+/g,"")) || 0,
+                devolucion: parseFloat(f[3]?.replace(/[^0-9.-]+/g,"")) || 0
+            })).filter(d => d.venta > 0 && d.proveedor !== "Etiquetas de fila");
 
-        cargarVendedores();
-        procesar();
+            // Cargar selector de vendedores
+            const vendedores = [...new Set(datos.map(d => d.vendedor))].sort();
+            const select = document.getElementById('selVendedor');
+            select.innerHTML = '<option value="TODO">-- VER TOTAL GENERAL --</option>';
+            vendedores.forEach(v => {
+                if(v) select.innerHTML += `<option value="${v}">${v}</option>`;
+            });
+
+            actualizar();
+        } catch(e) { console.error(e); }
     }
 
-    function cargarVendedores() {
-        const select = document.getElementById('selVendedor');
-        const lista = [...new Set(rawData.map(d => d.vendedor))].sort();
-        lista.forEach(v => {
-            if(v && v !== "Etiquetas de columna") {
-                const opt = document.createElement('option');
-                opt.value = v; opt.text = v;
-                select.appendChild(opt);
-            }
-        });
-    }
+    function actualizar() {
+        const vSeleccionado = document.getElementById('selVendedor').value;
+        const tabla = document.getElementById('tablaBody');
+        let sumaV = 0, sumaD = 0;
+        tabla.innerHTML = "";
 
-    function procesar() {
-        const fil = document.getElementById('selVendedor').value;
-        const body = document.getElementById('tabla');
-        let tV = 0, tD = 0;
-        body.innerHTML = "";
+        const filtrados = vSeleccionado === "TODO" ? datos : datos.filter(d => d.vendedor === vSeleccionado);
 
-        const final = fil === "GENERAL" ? rawData : rawData.filter(d => d.vendedor === fil);
-
-        final.forEach(d => {
-            tV += d.venta; tD += d.devolucion;
-            body.innerHTML += `<tr>
-                <td>${d.proveedor}</td>
-                <td class="text-end">$ ${d.venta.toLocaleString('es-CO')}</td>
-                <td class="text-end">$ ${d.devolucion.toLocaleString('es-CO')}</td>
+        filtrados.forEach(d => {
+            sumaV += d.venta; sumaD += d.devolucion;
+            tabla.innerHTML += `<tr>
+                <td class="fw-bold">${d.proveedor}</td>
+                <td class="text-end text-success fw-bold">$ ${d.venta.toLocaleString('es-CO')}</td>
+                <td class="text-end text-danger">$ ${d.devolucion.toLocaleString('es-CO')}</td>
             </tr>`;
         });
 
-        document.getElementById('vNeta').innerText = `$ ${tV.toLocaleString('es-CO')}`;
-        document.getElementById('vDev').innerText = `$ ${tD.toLocaleString('es-CO')}`;
-        document.getElementById('vPorc').innerText = tV > 0 ? ((tD/tV)*100).toFixed(2) + "%" : "0%";
+        document.getElementById('totalVenta').innerText = `$ ${sumaV.toLocaleString('es-CO')}`;
+        document.getElementById('totalDev').innerText = `$ ${sumaD.toLocaleString('es-CO')}`;
+        document.getElementById('porcDev').innerText = sumaV > 0 ? ((sumaD/sumaV)*100).toFixed(2) + "%" : "0%";
     }
 
-    window.onload = cargar;
+    window.onload = cargarDatos;
 </script>
 </body>
 </html>
