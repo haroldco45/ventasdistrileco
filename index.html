@@ -3,157 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Distrileco | Dashboard de Ventas 202603</title>
+    <title>Distrileco | Dashboard Real</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        :root { --verde-corporativo: #1b5e20; --verde-claro: #e8f5e9; }
-        body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
-        .header-app { background: linear-gradient(90deg, #1b5e20 0%, #43a047 100%); color: white; padding: 20px; border-bottom: 5px solid #ffca28; }
-        .card-stats { border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: 0.3s; }
-        .card-stats:hover { transform: translateY(-5px); }
-        .table-container { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .vibras-logo { width: 60px; height: 60px; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.2)); }
+        :root { --verde: #2e7d32; }
+        body { background-color: #f8f9fa; font-family: sans-serif; }
+        .header { background: var(--verde); color: white; padding: 15px; border-bottom: 4px solid #ffd600; }
+        .kpi-card { border: none; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .logo-vp { height: 40px; }
     </style>
 </head>
 <body>
 
-<div class="header-app mb-4">
-    <div class="container d-flex justify-content-between align-items-center">
-        <div>
-            <h1 class="h3 mb-0">🚀 DISTRILECO S.A.S</h1>
-            <small>Control de Ventas Globales - Periodo 202603</small>
-        </div>
-        <div class="text-center">
-            <span style="font-size: 0.7rem; display: block;">VIBRAS POSITIVAS</span>
-            <img src="https://via.placeholder.com/60/ffffff/000000?text=VP" alt="Logo VP" class="vibras-logo">
-        </div>
+<div class="header d-flex justify-content-between align-items-center">
+    <div>
+        <h4 class="mb-0">DISTRILECO S.A.S</h4>
+        <small>Control de Ventas por Vendedor - 202603</small>
+    </div>
+    <div class="text-end">
+        <small class="d-block">Vibras Positivas</small>
+        <img src="https://via.placeholder.com/40/ffffff/000000?text=VP" class="logo-vp">
     </div>
 </div>
 
-<div class="container">
+<div class="container mt-4">
     <div class="row mb-4 justify-content-center">
-        <div class="col-md-6">
-            <div class="card p-3 card-stats">
-                <label class="form-label fw-bold text-success">👤 Seleccionar Vendedor:</label>
-                <select id="vendedorSelect" class="form-select" onchange="actualizarDashboard()">
-                    <option value="TOTAL GENERAL">-- MOSTRAR TODO (TOTAL GENERAL) --</option>
-                </select>
+        <div class="col-md-6 text-center">
+            <label class="fw-bold mb-2">👤 SELECCIONAR VENDEDOR:</label>
+            <select id="selVendedor" class="form-select border-success" onchange="procesar()">
+                <option value="GENERAL">-- TOTAL GENERAL (TODOS) --</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="row mb-4 text-center">
+        <div class="col-md-4">
+            <div class="card kpi-card p-3">
+                <small class="text-muted">VENTA NETA</small>
+                <h3 id="vNeta" class="text-success fw-bold">$ 0</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card kpi-card p-3">
+                <small class="text-muted">DEVOLUCIONES</small>
+                <h3 id="vDev" class="text-danger fw-bold">$ 0</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card kpi-card p-3">
+                <small class="text-muted">% DEVOLUCIÓN</small>
+                <h3 id="vPorc">0%</h3>
             </div>
         </div>
     </div>
 
-    <div class="row mb-4">
-        <div class="col-md-4 mb-3">
-            <div class="card card-stats p-4 text-center">
-                <h6 class="text-muted text-uppercase small">Venta Neta</h6>
-                <h2 id="kpiVenta" class="text-success fw-bold">$ 0</h2>
-            </div>
-        </div>
-        <div class="col-md-4 mb-3">
-            <div class="card card-stats p-4 text-center">
-                <h6 class="text-muted text-uppercase small">Devoluciones</h6>
-                <h2 id="kpiDev" class="text-danger fw-bold">$ 0</h2>
-            </div>
-        </div>
-        <div class="col-md-4 mb-3">
-            <div class="card card-stats p-4 text-center">
-                <h6 class="text-muted text-uppercase small">% Devolución</h6>
-                <h2 id="kpiPorcentaje" class="text-dark fw-bold">0%</h2>
-            </div>
-        </div>
-    </div>
-
-    <div class="table-container mb-5">
-        <h5 class="mb-4 border-bottom pb-2">Detalle por Proveedor</h5>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Proveedor</th>
-                        <th class="text-end">Venta</th>
-                        <th class="text-end">Devolución</th>
-                    </tr>
-                </thead>
-                <tbody id="cuerpoTabla">
-                    </tbody>
-            </table>
-        </div>
+    <div class="card p-3 shadow-sm">
+        <table class="table table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Proveedor</th>
+                    <th class="text-end">Venta</th>
+                    <th class="text-end">Devolución</th>
+                </tr>
+            </thead>
+            <tbody id="tabla"></tbody>
+        </table>
     </div>
 </div>
 
 <script>
-    // URL de tu Google Sheets Publicado como CSV
-    const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTS9DgsxRjIOoy7j-8pYeuxO_-gIaxqC8w906-pMzHpsbc5Rb4xx0UgfrVoglI7TQ/pub?output=csv"; 
-    
-    let datosOriginales = [];
+    // PEGA AQUÍ TU URL DE GOOGLE SHEETS (CSV)
+    const URL_CSV = "TU_URL_AQUI"; 
 
-    async function fetchData() {
-        try {
-            const response = await fetch(csvUrl);
-            const data = await response.text();
-            const rows = data.split('\n').slice(5); // Saltamos encabezados iniciales del Excel
-            
-            datosOriginales = rows.map(row => {
-                const cols = row.split(',');
-                return {
-                    proveedor: cols[0]?.trim(),
-                    vendedor: cols[1]?.trim(),
-                    venta: parseFloat(cols[2]?.replace(/[^0-9.-]+/g,"")) || 0,
-                    devolucion: parseFloat(cols[3]?.replace(/[^0-9.-]+/g,"")) || 0
-                };
-            }).filter(d => d.proveedor && d.proveedor !== "TOTAL GENERAL");
+    let rawData = [];
 
-            llenarSelector();
-            actualizarDashboard();
-        } catch (e) {
-            console.error("Error cargando datos:", e);
-            alert("Error al conectar con Google Drive. Verifica la URL del CSV.");
-        }
+    async function cargar() {
+        const res = await fetch(URL_CSV);
+        const text = await res.text();
+        // Separar por filas y limpiar datos
+        const rows = text.split('\n').map(r => r.split(','));
+
+        // Procesar filas ignorando los encabezados de la tabla dinámica
+        // Según tu imagen, los datos reales empiezan después de las filas de filtro
+        rawData = rows.slice(7).map(r => ({
+            proveedor: r[0]?.trim(),
+            vendedor: r[1]?.trim(), // Asegúrate que en el CSV esta sea la columna de vendedor
+            venta: parseFloat(r[2]?.replace(/[^0-9.-]+/g,"")) || 0,
+            devolucion: parseFloat(r[3]?.replace(/[^0-9.-]+/g,"")) || 0
+        })).filter(d => d.proveedor && d.proveedor !== "Total general");
+
+        cargarVendedores();
+        procesar();
     }
 
-    function llenarSelector() {
-        const select = document.getElementById('vendedorSelect');
-        const vendedores = [...new Set(datosOriginales.map(d => d.vendedor))].sort();
-        vendedores.forEach(v => {
-            if(v) {
+    function cargarVendedores() {
+        const select = document.getElementById('selVendedor');
+        const lista = [...new Set(rawData.map(d => d.vendedor))].sort();
+        lista.forEach(v => {
+            if(v && v !== "Etiquetas de columna") {
                 const opt = document.createElement('option');
-                opt.value = v;
-                opt.innerHTML = v;
+                opt.value = v; opt.text = v;
                 select.appendChild(opt);
             }
         });
     }
 
-    function actualizarDashboard() {
-        const filtrado = document.getElementById('vendedorSelect').value;
-        const tabla = document.getElementById('cuerpoTabla');
-        let tVenta = 0, tDev = 0;
+    function procesar() {
+        const fil = document.getElementById('selVendedor').value;
+        const body = document.getElementById('tabla');
+        let tV = 0, tD = 0;
+        body.innerHTML = "";
 
-        tabla.innerHTML = "";
-        
-        const datosFiltrados = filtrado === "TOTAL GENERAL" 
-            ? datosOriginales 
-            : datosOriginales.filter(d => d.vendedor === filtrado);
+        const final = fil === "GENERAL" ? rawData : rawData.filter(d => d.vendedor === fil);
 
-        datosFiltrados.forEach(d => {
-            tVenta += d.venta;
-            tDev += d.devolucion;
-            tabla.innerHTML += `
-                <tr>
-                    <td>${d.proveedor}</td>
-                    <td class="text-end">$ ${d.venta.toLocaleString('es-CO')}</td>
-                    <td class="text-end text-danger">$ ${d.devolucion.toLocaleString('es-CO')}</td>
-                </tr>`;
+        final.forEach(d => {
+            tV += d.venta; tD += d.devolucion;
+            body.innerHTML += `<tr>
+                <td>${d.proveedor}</td>
+                <td class="text-end">$ ${d.venta.toLocaleString('es-CO')}</td>
+                <td class="text-end">$ ${d.devolucion.toLocaleString('es-CO')}</td>
+            </tr>`;
         });
 
-        document.getElementById('kpiVenta').innerText = `$ ${tVenta.toLocaleString('es-CO')}`;
-        document.getElementById('kpiDev').innerText = `$ ${tDev.toLocaleString('es-CO')}`;
-        const porc = tVenta > 0 ? ((tDev / tVenta) * 100).toFixed(2) : 0;
-        document.getElementById('kpiPorcentaje').innerText = `${porc}%`;
+        document.getElementById('vNeta').innerText = `$ ${tV.toLocaleString('es-CO')}`;
+        document.getElementById('vDev').innerText = `$ ${tD.toLocaleString('es-CO')}`;
+        document.getElementById('vPorc').innerText = tV > 0 ? ((tD/tV)*100).toFixed(2) + "%" : "0%";
     }
 
-    window.onload = fetchData;
+    window.onload = cargar;
 </script>
-
 </body>
 </html>
