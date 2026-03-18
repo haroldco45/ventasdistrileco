@@ -84,14 +84,14 @@
 </div>
 
 <script>
-    // URL ACTUALIZADA CON EL NUEVO SCRIPT DE GOOGLE
+    // URL ACTUALIZADA SEGÚN TU ÚLTIMA IMPLEMENTACIÓN
     const URL_SCRIPT = "https://script.google.com/macros/s/AKfycby442YwZd6C2Cz_txtegsovH9bY-yYQkabk6XqI4X9MnhbEx6eGCdoP3s77oO3RG39R/exec";
     let datosWeb = [];
 
     async function cargar() {
         const loader = document.getElementById('loader');
         try {
-            // Anti-caché para forzar lectura del Excel recién guardado
+            // Anti-caché: Forzamos la descarga de los datos frescos del Drive
             const res = await fetch(`${URL_SCRIPT}?t=${new Date().getTime()}`, { redirect: 'follow' });
             datosWeb = await res.json();
             
@@ -149,7 +149,7 @@
         document.getElementById('vPorc').innerText = (p < 0 ? 0 : p).toFixed(1) + "%";
     }
 
-    setInterval(cargar, 300000); // Refresco automático cada 5 min
+    setInterval(cargar, 300000); // Se actualiza solo cada 5 minutos
     window.onload = cargar;
 </script>
 </body>
