@@ -16,7 +16,6 @@
         .btn-update { transition: all 0.2s ease; border-radius: 20px; font-size: 0.75rem; }
         .btn-update:active { transform: scale(0.9); }
         .tiny-text { font-size: 0.65rem; }
-        .table-responsive { border-radius: 15px; }
     </style>
 </head>
 <body>
@@ -85,16 +84,20 @@
 </div>
 
 <script>
-    // URL DEL SCRIPT (Asegúrate que sea la última implementada)
+    // IMPORTANTE: Asegúrate de que esta URL sea la que obtuviste al darle "Implementar"
     const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbwg3h6OhzJsGgeuOEnTtlR7ElZKOdo7XYO1Sg-YfzjPBB5Qlv9rj8ZsISPHt7KAmF_Y4w/exec";
     let datosWeb = [];
 
     async function cargar() {
+        const loader = document.getElementById('loader');
         try {
-            // Cache-Busting: Agregamos un timestamp para forzar datos nuevos en cada petición
+            // Cache-Busting: Evita que el celular guarde datos viejos
             const res = await fetch(`${URL_SCRIPT}?nocache=${new Date().getTime()}`, { redirect: 'follow' });
             datosWeb = await res.json();
             
+            // Si el script devolvió un error (como el que vimos en tu captura)
+            if (datosWeb.error) throw new Error(datosWeb.error);
+
             const listaVendedores = [...new Set(datosWeb.map(d => d.vendedor))].filter(v => v && v !== "undefined").sort();
             const sel = document.getElementById('selVendedor');
             const seleccionPrevia = sel.value;
@@ -104,11 +107,11 @@
             
             if(seleccionPrevia) sel.value = seleccionPrevia;
             
-            document.getElementById('loader').style.display = 'none';
+            loader.style.display = 'none';
             actualizar(); 
         } catch (error) { 
-            console.error("Error en la carga:", error);
-            document.getElementById('loader').innerHTML = "⚠️ Error de conexión. Reintente.";
+            console.error("Error:", error);
+            loader.innerHTML = `<span class="text-danger fw-bold">⚠️ Error de conexión: ${error.message}. <br> Revisa la implementación en Apps Script.</span>`;
         }
     }
 
@@ -149,7 +152,6 @@
         document.getElementById('vPorc').innerText = (porc < 0 ? 0 : porc).toFixed(1) + "%";
     }
 
-    // Auto-actualizar cada 5 minutos automáticamente
     setInterval(cargar, 300000);
     window.onload = cargar;
 </script>
